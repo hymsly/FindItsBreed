@@ -16,10 +16,11 @@ const express_1 = require("express");
 const autenticacion_1 = require("../middlewares/autenticacion");
 const post_model_1 = require("../models/post.model");
 const file_system_1 = __importDefault(require("../classes/file-system"));
+const predictor_1 = __importDefault(require("../classes/predictor"));
 const postRoutes = express_1.Router();
 const fileSystem = new file_system_1.default();
 // Obtener POST paginados
-postRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+postRoutes.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let pagina = Number(req.query.pagina) || 1;
     let skip = pagina - 1;
     skip = skip * 10;
@@ -27,7 +28,7 @@ postRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         .sort({ _id: -1 })
         .skip(skip)
         .limit(10)
-        .populate('usuario', '-password')
+        .populate("usuario", "-password")
         .exec();
     res.json({
         ok: true,
@@ -36,40 +37,47 @@ postRoutes.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     });
 }));
 // Crear POST
-postRoutes.post('/', [autenticacion_1.verificaToken], (req, res) => {
+postRoutes.post("/", [autenticacion_1.verificaToken], (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const body = req.body;
     body.usuario = req.usuario._id;
     const imagenes = fileSystem.imagenesDeTempHaciaPost(req.usuario._id);
+    var predictor = new predictor_1.default();
+    console.log(imagenes);
+    yield predictor.predictBreed(req.usuario._id, imagenes).then(raza => {
+        console.log(raza);
+    });
     body.imgs = imagenes;
-    post_model_1.Post.create(body).then((postDB) => __awaiter(void 0, void 0, void 0, function* () {
-        yield postDB.populate('usuario', '-password').execPopulate();
+    post_model_1.Post.create(body)
+        .then((postDB) => __awaiter(void 0, void 0, void 0, function* () {
+        yield postDB.populate("usuario", "-password").execPopulate();
         res.json({
             ok: true,
             post: postDB
         });
-    })).catch(err => {
+    }))
+        .catch(err => {
         res.json(err);
     });
-});
+}));
 // Servicio para subir archivos
-postRoutes.post('/upload', [autenticacion_1.verificaToken], (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+postRoutes.post("/upload", [autenticacion_1.verificaToken], (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.files) {
         return res.status(400).json({
             ok: false,
-            mensaje: 'No se subió ningun archivo'
+            mensaje: "No se subió ningun archivo"
         });
     }
     const file = req.files.image;
     if (!file) {
         return res.status(400).json({
             ok: false,
-            mensaje: 'No se subió ningun archivo - image'
+            mensaje: "No se subió ningun archivo - image"
         });
     }
-    if (!file.mimetype.includes('image')) {
+    if (!file.mimetype.includes("image")) {
         return res.status(400).json({
             ok: false,
-            mensaje: 'Lo que subió no es una imagen'
+            mensaje: "Lo que subió no es una imagen"
         });
     }
     yield fileSystem.guardarImagenTemporal(file, req.usuario._id);
@@ -78,7 +86,7 @@ postRoutes.post('/upload', [autenticacion_1.verificaToken], (req, res) => __awai
         file: file.mimetype
     });
 }));
-postRoutes.get('/imagen/:userid/:img', (req, res) => {
+postRoutes.get("/imagen/:userid/:img", (req, res) => {
     const userId = req.params.userid;
     const img = req.params.img;
     const pathFoto = fileSystem.getFotoUrl(userId, img);
