@@ -13,10 +13,11 @@ class Predictor {
                 resolve();
             }
             const pathUser = path_1.default.resolve(__dirname, "../uploads/", userId, "posts", files[0]);
-            const pythonProcess = spawn("py", ["../predict.py", pathUser]);
+            console.log(pathUser);
+            const pythonProcess = spawn("py", ["predict.py", pathUser]);
             pythonProcess.stdout.on("data", (data) => {
                 console.log(data.toString());
-                resolve(1);
+                resolve(data.toString());
             });
         });
     }

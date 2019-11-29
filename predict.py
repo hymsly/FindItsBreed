@@ -1,5 +1,3 @@
-from keras.models import load_model
-from keras.preprocessing import image
 import numpy as np
 from PIL import Image
 from skimage.io import imread
@@ -13,16 +11,16 @@ import os
 
 img_width, img_height = 224, 224
 
-with open("./cnn/model.json",'r') as f:
+with open("./dist/cnn/model.json",'r') as f:
     model_json = f.read()
 
 model = model_from_json(model_json)
-model.load_weights("./cnn/model.h5")
+model.load_weights("./dist/cnn/model.h5")
 model.compile(optimizer="adam",loss="categorical_crossentropy",metrics=["acc"])
 
-with open("./cnn/label_maps.json",'r') as f:
+with open("./dist/cnn/label_maps.json",'r') as f:
     label_maps = json.loads(f.read())
-with open("./cnn/label_maps_rev.json",'r') as f:
+with open("./dist/cnn/label_maps_rev.json",'r') as f:
     label_maps_rev = json.loads(f.read())
 
 from keras.applications.densenet import DenseNet121, preprocess_input

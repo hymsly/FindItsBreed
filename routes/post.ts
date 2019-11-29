@@ -7,7 +7,7 @@ import Predictor from "../classes/predictor";
 
 const postRoutes = Router();
 const fileSystem = new FileSystem();
-
+const predictor = new Predictor();
 // Obtener POST paginados
 postRoutes.get("/", async (req: any, res: Response) => {
   let pagina = Number(req.query.pagina) || 1;
@@ -35,26 +35,22 @@ postRoutes.post("/", [verificaToken], async (req: any, res: Response) => {
 
   const imagenes = fileSystem.imagenesDeTempHaciaPost(req.usuario._id);
 
-  var predictor: Predictor = new Predictor();
-  console.log(imagenes);
   await predictor.predictBreed(req.usuario._id, imagenes).then(raza => {
-    console.log(raza);
-  });
+    body.imgs = imagenes;
+    body.raza = raza;
+    Post.create(body)
+      .then(async postDB => {
+        await postDB.populate("usuario", "-password").execPopulate();
 
-  body.imgs = imagenes;
-
-  Post.create(body)
-    .then(async postDB => {
-      await postDB.populate("usuario", "-password").execPopulate();
-
-      res.json({
-        ok: true,
-        post: postDB
+        res.json({
+          ok: true,
+          post: postDB
+        });
+      })
+      .catch(err => {
+        res.json(err);
       });
-    })
-    .catch(err => {
-      res.json(err);
-    });
+  });
 });
 
 // Servicio para subir archivos

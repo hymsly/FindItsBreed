@@ -19,6 +19,7 @@ const file_system_1 = __importDefault(require("../classes/file-system"));
 const predictor_1 = __importDefault(require("../classes/predictor"));
 const postRoutes = express_1.Router();
 const fileSystem = new file_system_1.default();
+const predictor = new predictor_1.default();
 // Obtener POST paginados
 postRoutes.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let pagina = Number(req.query.pagina) || 1;
@@ -41,22 +42,20 @@ postRoutes.post("/", [autenticacion_1.verificaToken], (req, res) => __awaiter(vo
     const body = req.body;
     body.usuario = req.usuario._id;
     const imagenes = fileSystem.imagenesDeTempHaciaPost(req.usuario._id);
-    var predictor = new predictor_1.default();
-    console.log(imagenes);
     yield predictor.predictBreed(req.usuario._id, imagenes).then(raza => {
-        console.log(raza);
-    });
-    body.imgs = imagenes;
-    post_model_1.Post.create(body)
-        .then((postDB) => __awaiter(void 0, void 0, void 0, function* () {
-        yield postDB.populate("usuario", "-password").execPopulate();
-        res.json({
-            ok: true,
-            post: postDB
+        body.imgs = imagenes;
+        body.raza = raza;
+        post_model_1.Post.create(body)
+            .then((postDB) => __awaiter(void 0, void 0, void 0, function* () {
+            yield postDB.populate("usuario", "-password").execPopulate();
+            res.json({
+                ok: true,
+                post: postDB
+            });
+        }))
+            .catch(err => {
+            res.json(err);
         });
-    }))
-        .catch(err => {
-        res.json(err);
     });
 }));
 // Servicio para subir archivos
